@@ -1,0 +1,26 @@
+body {
+    /* position: absolute; */
+    /* top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; */
+    /* display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; */
+    font-family: "Century Gothic", CenturyGothic, Geneva, AppleGothic, sans-serif; 
+    color: black;
+    background-color: white;
+}
+
+#wrapper {
+    position: relative;
+    /* display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; */
+}
+
+#static-map, #dynamic-map {
+    position: absolute;
+}

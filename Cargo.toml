@@ -1,0 +1,35 @@
+[package]
+name = "map_drawer"
+version = "0.1.0"
+authors = ["Simon B. Gasse"]
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wasm-bindgen = "0.2.81"
+console_error_panic_hook = { version = "0.1.7", optional = true }
+serde = { version = "1.0", features = ["derive"] }
+svgtypes = "0.8.1"
+js-sys = "0.3.55"
+roxmltree = "0.14.1"
+
+[features]
+default = ["console_error_panic_hook"]
+
+[dependencies.web-sys]
+version = "0.3.58"
+features = [
+    'console',
+    'CanvasRenderingContext2d',
+    'DedicatedWorkerGlobalScope',
+    'Document',
+    'HtmlCanvasElement',
+    'HtmlElement',
+    'HtmlInputElement',
+    'MessageEvent',
+    'OffscreenCanvas',
+    'Window',
+    'Worker',
+]
