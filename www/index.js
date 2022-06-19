@@ -111,7 +111,7 @@ function setupMousePosToMapSending(htmlCanvas, worker) {
       relX: relCanvasX,
       relY: relCanvasY,
     })
-  }, 500)
+  }, 250)
 }
 
 function setupCanvasClick(htmlCanvas, worker) {
