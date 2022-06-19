@@ -1,3 +1,6 @@
+// Main JS entry point, spawning the web worker and handling the interaction.
+
+// Variables for throttled sending of the mouse position to the worker
 var mouseMoved = false
 var relCanvasX = 0.0
 var relCanvasY = 0.0
@@ -12,18 +15,37 @@ async function runMain() {
   const htmlCanvas = document.getElementById('dynamic-map')
   transferCanvas(htmlCanvas, drawWorker)
 
+  // Send shape state and fill styles to the worker before drawing.
+  // States (and even fill styles) could be updated at any time.
   sendStateColorMap(drawWorker)
   sendShapeStates(drawWorker)
 
+  // Setup listeners, timers and callbacks to regularily send the relative
+  // mouse position and evaluate click positions on the canvas.
   setupWorkerListener(drawWorker)
   setupMousePosToMapSending(htmlCanvas, drawWorker)
   setupCanvasClick(htmlCanvas, drawWorker)
 
+  // Trigger first render
   drawWorker.postMessage({
     command: 'renderForRelPos',
     relX: 0.0,
     relY: 0.0,
   })
+}
+
+async function workerReady(worker) {
+  await new Promise((resolve) =>
+    worker.addEventListener('message', resolve, { once: true }),
+  )
+}
+
+function transferCanvas(htmlCanvas, worker) {
+  // To have an unblocked main thread while we draw, we transfer the canvas to
+  // the worker as `OffscreenCanvas`. This means the main thread can no longer
+  // draw on the canvas itself.
+  let offscreen = htmlCanvas.transferControlToOffscreen()
+  worker.postMessage({ command: 'setCanvas', canvas: offscreen }, [offscreen])
 }
 
 function sendStateColorMap(worker) {
@@ -61,17 +83,35 @@ function sendShapeStates(worker) {
   })
 }
 
-async function workerReady(worker) {
-  await new Promise((resolve) =>
-    worker.addEventListener('message', resolve, { once: true }),
-  )
-}
-
 function setupWorkerListener(worker) {
   worker.addEventListener('message', (event) => {
     console.debug('Data received from worker: ', event.data)
     alert(`Clicked on shape ${event.data.shapeId}`)
   })
+}
+
+function setupMousePosToMapSending(htmlCanvas, worker) {
+  // To avoid issues with different scales of the HTML element and the canvas,
+  // we send relative coordinates. Note that currently, we need the exact same
+  // resolution to have the canvas perfectly overlayed on top of the SVG image.
+  htmlCanvas.addEventListener('mousemove', (event) => {
+    // Update the relative position and the flag that it was updated on every
+    // movement but do not send it right away.
+    relCanvasX = event.offsetX / htmlCanvas.clientWidth
+    relCanvasY = event.offsetY / htmlCanvas.clientHeight
+    mouseMoved = true
+  })
+
+  // Setup an interval for sending the relative mouse position to throttle the
+  // amount of messages to process in the worker.
+  window.setInterval(() => {
+    mouseMoved = false
+    worker.postMessage({
+      command: 'renderForRelPos',
+      relX: relCanvasX,
+      relY: relCanvasY,
+    })
+  }, 500)
 }
 
 function setupCanvasClick(htmlCanvas, worker) {
@@ -84,28 +124,6 @@ function setupCanvasClick(htmlCanvas, worker) {
       relY: relCanvasY,
     })
   })
-}
-
-function setupMousePosToMapSending(htmlCanvas, worker) {
-  htmlCanvas.addEventListener('mousemove', (event) => {
-    relCanvasX = event.offsetX / htmlCanvas.clientWidth
-    relCanvasY = event.offsetY / htmlCanvas.clientHeight
-    mouseMoved = true
-  })
-
-  window.setInterval(() => {
-    mouseMoved = false
-    worker.postMessage({
-      command: 'renderForRelPos',
-      relX: relCanvasX,
-      relY: relCanvasY,
-    })
-  }, 500)
-}
-
-function transferCanvas(htmlCanvas, worker) {
-  let offscreen = htmlCanvas.transferControlToOffscreen()
-  worker.postMessage({ command: 'setCanvas', canvas: offscreen }, [offscreen])
 }
 
 runMain()
