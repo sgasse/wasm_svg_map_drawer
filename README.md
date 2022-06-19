@@ -3,6 +3,8 @@
 Draw an interactive map based on a `.svg` with WASM code running in a web
 worker. Can be used to show e.g. occupied/reserved desks in an office.
 
+![Map Drawer Example](./assets/map_drawer_example.gif)
+
 ## Build & Run
 
 - You need [Rust][rust-install] and [`wasm-pack`][wasm-pack-install] installed
